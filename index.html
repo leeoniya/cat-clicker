@@ -1,0 +1,138 @@
+<!doctype html>
+<html>
+<head>
+  <title>domvm Cat Clicker</title>
+
+  <script src="domvm.min.js"></script>
+
+  <style>
+    label,
+    input,
+    button {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    // model/data
+    var cats = [
+      {
+        name: 'Snjeza',
+        clicks: 0,
+        img: 'cat_picture1'
+      },
+      {
+        name: 'Ivana',
+        clicks: 0,
+        img: 'cat_picture2'
+      },
+      {
+        name: 'Jovana',
+        clicks: 0,
+        img: 'cat_picture3'
+      },
+      {
+        name: 'Silva',
+        clicks: 0,
+        img: 'cat_picture4'
+      },
+      {
+        name: 'Sofija',
+        clicks: 0,
+        img: 'cat_picture5'
+      }
+    ];
+
+    function CatsView(view, cats) {
+      // private view state
+      var currentCat = null;
+      var adminVisible = false;
+
+      // "octopus", functions to modify view state or model
+      var api = {
+        setCurrent: function(idx) {
+          currentCat = cats[idx];
+          view.redraw();
+        },
+        plusOne: function(cat) {
+          cat.clicks++;
+          view.redraw();
+        },
+        toggleAdmin: function() {
+          adminVisible = !adminVisible;
+          view.redraw();
+        },
+        updateCat: function(cat, name, img, clicks) {
+          cat.name = name;
+          cat.img = img;
+          cat.clicks = clicks;
+          view.redraw();
+        },
+      };
+
+      // set initial cat
+      api.setCurrent(0);
+
+      // nav generator for cat list
+      function navTpl(cats) {
+        return ["nav#catlist",
+          cats.map(function(cat, idx) {
+            return ["button", {type: "button", onclick: [api.setCurrent, idx]}, cat.name];
+          })
+        ];
+      }
+
+      // slide generator for any cat you give it
+      function catTpl(cat) {
+        return ["#main",
+          ["h3", cat.name],
+          [".cat",
+            cat.clicks + " clicks",
+            ["br"],
+            ["img", {src: "img/" + currentCat.img + ".jpeg", onclick: [api.plusOne, cat]}],
+            ["br"],
+            ["button", {onclick: api.toggleAdmin}, "Admin"],
+          ],
+        ];
+      }
+
+      // admin generator for any cat you give it
+      function adminTpl(cat) {
+        function onClickSave(e) {
+          var formEls = e.target.form.elements;
+          api.updateCat(
+            cat,
+            formEls.namedItem("name").value,
+            formEls.namedItem("img").value,
+            formEls.namedItem("clicks").value
+          );
+        }
+
+        return ["form",
+          ["label", {for: "name"}, "Cat Name"],
+          ["input", {name: "name", value: cat.name}],
+          ["label", {for: "img"}, "Cat Image"],
+          ["input", {name: "img", value: cat.img}],
+          ["label", {for: "clicks"}, "Clicks"],
+          ["input", {name: "clicks", value: cat.clicks}],
+
+          ["button", {type: "button", onclick: onClickSave}, "Save"],
+          ["button", {type: "button", onclick: api.toggleAdmin}, "Cancel"],
+        ];
+      }
+
+      // we return this render() function which generates the full DOM template
+      return function() {
+        return ["#myCats",
+          navTpl(cats),
+          catTpl(currentCat),
+          adminVisible ? adminTpl(currentCat) : null,
+        ]
+      };
+    }
+
+    domvm.view(CatsView, cats).mount(document.body);
+  </script>
+</body>
+</html>
